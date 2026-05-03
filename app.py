@@ -1,80 +1,91 @@
 import streamlit as st
 from google import genai
 
-# Company Branding
-st.set_page_config(page_title="Nexus AI Agents", page_icon="⚡", layout="wide")
-st.sidebar.title("⚡ Nexus AI Workspace")
-st.sidebar.write("Your on-demand AI workforce.")
+# 1. App Configuration & Branding
+st.set_page_config(page_title="HyperLead AI", page_icon="🎯", layout="wide")
 
-# API Key Setup
-api_key = st.sidebar.text_input("Enter your Google Gemini API Key:", type="password")
+st.title("🎯 HyperLead AI")
+st.markdown("**Your Elite B2B Sales & Outreach Agent**")
+st.write("Generic cold emails go to spam. Paste your prospect's details below, and let AI write a hyper-personalized outreach campaign that guarantees replies.")
+st.markdown("---")
 
-# Select Your Agent
-agent_choice = st.sidebar.radio(
-    "Select an AI Agent to hire:",["📈 The Sales Agent", "✍️ The SEO Blog Agent", "📱 The Social Media Agent"]
-)
+# 2. Sidebar Setup
+with st.sidebar:
+    st.header("⚙️ System Setup")
+    api_key = st.text_input("Enter Google Gemini API Key:", type="password")
+    st.write("---")
+    st.write("Built by[Your Name] | CEO of HyperLead AI")
 
-st.sidebar.markdown("---")
-st.sidebar.write("Built by Umesh")
+# 3. The UI Layout (Using Columns for a professional look)
+col1, col2 = st.columns(2)
 
-# ---------------------------------------------------------
-# AGENT 1: THE SALES AGENT (Cold Email Writer)
-# ---------------------------------------------------------
-if agent_choice == "📈 The Sales Agent":
-    st.title("📈 The Sales Agent")
-    st.write("Generates high-converting cold emails to get B2B clients.")
+with col1:
+    st.subheader("🏢 1. Your Company")
+    my_company = st.text_input("Your Company Name (e.g., Nexus AI)")
+    my_product = st.text_area("What do you sell? (e.g., We build custom AI software for businesses to automate tasks)", height=100)
+
+with col2:
+    st.subheader("👤 2. Your Target Prospect")
+    prospect_name = st.text_input("Prospect's Name (e.g., John Doe)")
+    prospect_company = st.text_input("Prospect's Company Name")
+    prospect_context = st.text_area("Paste their LinkedIn Bio, recent company news, or a post they made:", height=100)
+
+# 4. Generate Button
+st.markdown("---")
+if st.button("Generate Personal Outreach Campaign 🚀", use_container_width=True):
     
-    product_name = st.text_input("What are you selling?")
-    target_audience = st.text_input("Who are you emailing? (e.g., Real Estate CEOs)")
-    
-    if st.button("Generate Cold Email 🚀"):
-        if not api_key:
-            st.error("⚠️ Please enter your API Key in the sidebar.")
-        else:
-            with st.spinner("Writing the perfect sales pitch..."):
+    if not api_key:
+        st.error("⚠️ Please enter your API Key in the sidebar.")
+    elif not my_company or not my_product or not prospect_name or not prospect_context:
+        st.error("⚠️ Please fill out all the fields so the AI can do its research.")
+    else:
+        with st.spinner("Analyzing prospect and generating campaign..."):
+            try:
+                # Initialize Google Gemini 2.5
                 client = genai.Client(api_key=api_key)
-                prompt = f"Write a short, punchy, and highly persuasive cold email selling '{product_name}' to '{target_audience}'. Keep it under 150 words. Focus on solving a specific problem for them. Include a strong Call to Action."
-                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-                st.success("Email Ready!")
-                st.write(response.text)
-
-# ---------------------------------------------------------
-# AGENT 2: THE SEO BLOG AGENT
-# ---------------------------------------------------------
-elif agent_choice == "✍️ The SEO Blog Agent":
-    st.title("✍️ The SEO Blog Agent")
-    st.write("Writes Google-ranking blog posts for your company website.")
-    
-    blog_topic = st.text_input("What is the blog post about?")
-    keywords = st.text_input("Enter 3 SEO Keywords:")
-    
-    if st.button("Write Blog Post 📝"):
-        if not api_key:
-            st.error("⚠️ Please enter your API Key in the sidebar.")
-        else:
-            with st.spinner("Researching and writing..."):
-                client = genai.Client(api_key=api_key)
-                prompt = f"Write a professional, 400-word SEO blog post about '{blog_topic}'. You must naturally include these keywords: {keywords}. Format it with nice headings and bullet points."
-                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-                st.success("Blog Post Ready!")
-                st.write(response.text)
-
-# ---------------------------------------------------------
-# AGENT 3: THE SOCIAL MEDIA AGENT
-# ---------------------------------------------------------
-elif agent_choice == "📱 The Social Media Agent":
-    st.title("📱 The Social Media Agent")
-    st.write("Turns any topic into a viral Twitter/X Thread and LinkedIn Post.")
-    
-    topic = st.text_area("Paste your ideas, an article, or a topic here:")
-    
-    if st.button("Create Social Content 📲"):
-        if not api_key:
-            st.error("⚠️ Please enter your API Key in the sidebar.")
-        else:
-            with st.spinner("Creating viral content..."):
-                client = genai.Client(api_key=api_key)
-                prompt = f"Act as an expert social media manager. Take this topic: '{topic}'. First, write a highly engaging LinkedIn post. Then, below that, write a viral 3-part Twitter thread about it. Use appropriate emojis."
-                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
-                st.success("Social Content Ready!")
-                st.write(response.text)
+                
+                # The Master Prompt
+                prompt = f"""
+                You are an elite B2B Sales Executive. Your goal is to write outreach messages that get replies.
+                
+                My Company: {my_company}
+                What we sell: {my_product}
+                
+                Target Prospect: {prospect_name} at {prospect_company}
+                Prospect Context/Research: {prospect_context}
+                
+                Task: 
+                Write a highly personalized outreach campaign. Do NOT sound like a robot. Sound like a friendly, high-status professional. 
+                Use the Prospect Context to make the first line highly personalized.
+                
+                Format your response EXACTLY like this:
+                
+                **📧 Subject Line Ideas:**
+                (Give 3 catchy, short subject lines)
+                
+                **✉️ The Cold Email:**
+                (Write a short, 4-sentence email. 1. Personalized hook, 2. The problem they might face, 3. How we fix it, 4. Low-friction Call to Action)
+                
+                **🔗 LinkedIn Connection Message:**
+                (Write a 300-character max connection request based on their context)
+                """
+                
+                # Get the response
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                # Display results beautifully in Tabs
+                st.success("Campaign Generated Successfully!")
+                
+                tab1, tab2 = st.tabs(["📄 Campaign Results", "🧠 AI Thought Process"])
+                
+                with tab1:
+                    st.write(response.text)
+                
+                with tab2:
+                    st.info("The AI analyzed the prospect's background and tied it directly to your product's value proposition to ensure maximum relevance.")
+                    
+            except Exception as e:
+                st.error(f"An error occurred: {e}") 
