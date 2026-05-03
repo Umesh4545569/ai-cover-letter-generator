@@ -1,91 +1,73 @@
 import streamlit as st
 from google import genai
+import PyPDF2
 
-# 1. App Configuration & Branding
-st.set_page_config(page_title="HyperLead AI", page_icon="🎯", layout="wide")
+st.set_page_config(page_title="DocuMind AI", page_icon="📄", layout="wide")
 
-st.title("🎯 HyperLead AI")
-st.markdown("**Your Elite B2B Sales & Outreach Agent**")
-st.write("Generic cold emails go to spam. Paste your prospect's details below, and let AI write a hyper-personalized outreach campaign that guarantees replies.")
+st.title("📄 DocuMind AI")
+st.write("Upload any PDF document (Textbooks, Contracts, Financial Reports) and instantly ask questions about it.")
 st.markdown("---")
 
-# 2. Sidebar Setup
 with st.sidebar:
-    st.header("⚙️ System Setup")
+    st.header("⚙️ Setup")
     api_key = st.text_input("Enter Google Gemini API Key:", type="password")
     st.write("---")
-    st.write("Built by[Your Name] | CEO of HyperLead AI")
+    st.write("Built by Umesh | Long-Term AI SaaS")
 
-# 3. The UI Layout (Using Columns for a professional look)
-col1, col2 = st.columns(2)
+uploaded_file = st.file_uploader("Upload your PDF document here:", type="pdf")
 
-with col1:
-    st.subheader("🏢 1. Your Company")
-    my_company = st.text_input("Your Company Name (e.g., Nexus AI)")
-    my_product = st.text_area("What do you sell? (e.g., We build custom AI software for businesses to automate tasks)", height=100)
+pdf_text = ""
+if uploaded_file is not None:
+    with st.spinner("Reading document..."):
+        try:
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            for page in pdf_reader.pages:
+                pdf_text += page.extract_text()
+            st.success("✅ Document uploaded and read successfully!")
+            
+            with st.expander("Show Document Preview"):
+                st.write(pdf_text[:1000] + "...")
+                
+        except Exception as e:
+            st.error(f"Error reading PDF: {e}")
 
-with col2:
-    st.subheader("👤 2. Your Target Prospect")
-    prospect_name = st.text_input("Prospect's Name (e.g., John Doe)")
-    prospect_company = st.text_input("Prospect's Company Name")
-    prospect_context = st.text_area("Paste their LinkedIn Bio, recent company news, or a post they made:", height=100)
+st.markdown("### Ask Questions about the Document")
+user_question = st.text_input("What do you want to know about this document?")
 
-# 4. Generate Button
-st.markdown("---")
-if st.button("Generate Personal Outreach Campaign 🚀", use_container_width=True):
-    
+if st.button("Ask AI 🧠"):
     if not api_key:
         st.error("⚠️ Please enter your API Key in the sidebar.")
-    elif not my_company or not my_product or not prospect_name or not prospect_context:
-        st.error("⚠️ Please fill out all the fields so the AI can do its research.")
+    elif not uploaded_file:
+        st.error("⚠️ Please upload a PDF first.")
+    elif not user_question:
+        st.error("⚠️ Please ask a question.")
     else:
-        with st.spinner("Analyzing prospect and generating campaign..."):
+        with st.spinner("Analyzing document to find your answer..."):
             try:
-                # Initialize Google Gemini 2.5
                 client = genai.Client(api_key=api_key)
-                
-                # The Master Prompt
                 prompt = f"""
-                You are an elite B2B Sales Executive. Your goal is to write outreach messages that get replies.
+                You are a highly intelligent document analysis AI.
+                Read the following document text carefully.
                 
-                My Company: {my_company}
-                What we sell: {my_product}
+                DOCUMENT TEXT:
+                {pdf_text}
                 
-                Target Prospect: {prospect_name} at {prospect_company}
-                Prospect Context/Research: {prospect_context}
+                USER QUESTION:
+                {user_question}
                 
-                Task: 
-                Write a highly personalized outreach campaign. Do NOT sound like a robot. Sound like a friendly, high-status professional. 
-                Use the Prospect Context to make the first line highly personalized.
-                
-                Format your response EXACTLY like this:
-                
-                **📧 Subject Line Ideas:**
-                (Give 3 catchy, short subject lines)
-                
-                **✉️ The Cold Email:**
-                (Write a short, 4-sentence email. 1. Personalized hook, 2. The problem they might face, 3. How we fix it, 4. Low-friction Call to Action)
-                
-                **🔗 LinkedIn Connection Message:**
-                (Write a 300-character max connection request based on their context)
+                INSTRUCTIONS:
+                Answer the user's question based strictly on the document provided. 
+                If the answer is not in the document, say "I cannot find the answer in the provided document."
+                Be highly accurate and professional.
                 """
                 
-                # Get the response
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=prompt
                 )
                 
-                # Display results beautifully in Tabs
-                st.success("Campaign Generated Successfully!")
+                st.info("💡 **Answer:**")
+                st.write(response.text)
                 
-                tab1, tab2 = st.tabs(["📄 Campaign Results", "🧠 AI Thought Process"])
-                
-                with tab1:
-                    st.write(response.text)
-                
-                with tab2:
-                    st.info("The AI analyzed the prospect's background and tied it directly to your product's value proposition to ensure maximum relevance.")
-                    
             except Exception as e:
-                st.error(f"An error occurred: {e}") 
+                st.error(f"An error occurred: {e}")
